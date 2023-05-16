@@ -34,7 +34,7 @@ float RPMs;
 const int pintDatosDQ = 3;
 
 // Variables de estado
-short Estado = 0;
+short Estado = 8;
 short Dosificando = 0;
 
 //Lista de Estados
@@ -59,6 +59,8 @@ HX711 balanza(DOUT, CLK);
 OneWire oneWireObjeto(pintDatosDQ);
 DallasTemperature sensorDS18B20(&oneWireObjeto);
 
+DeviceAddress insideThermometer;
+
 void setup() {
 
   balanza.set_scale(-1284.87);
@@ -76,7 +78,14 @@ void setup() {
   time = millis();
 
   Serial.begin(9600);
+
   sensorDS18B20.begin();
+  if (!sensorDS18B20.getAddress(insideThermometer, 0)) 
+    Serial.println("Unable to find address for Device 0"); 
+
+  sensorDS18B20.setResolution(insideThermometer, 9);
+  sensorDS18B20.setWaitForConversion(false);
+
 }
 
 void loop() {
@@ -169,15 +178,18 @@ void estado_DosificarUnica() {
 }
 
 void estado_Dosificar_Y_Motor() {
+  unsigned long actualTime = time;
+  unsigned long interval = time - actualTime;
+    estado_Temperatura();
+
   if (Serial.read() == 'V') {
     Velocidad = Serial.parseInt();
   }
-  unsigned long actualTime = time;
-  unsigned long inverval = time - actualTime;
-  while (inverval <= 100) {
+
+  while (interval <= 2000) {
     IniciarMotor();
     time = millis();
-    inverval = time - actualTime;
+    interval = time - actualTime;
   }
   if (Dosificando == 1) {
     DosificarB();
@@ -187,8 +199,11 @@ void estado_Dosificar_Y_Motor() {
 }
 
 void estado_Temperatura() {
-  sensorDS18B20.requestTemperatures();
+  unsigned long actualTime = time;
+  sensorDS18B20.requestTemperaturesByAddress(insideThermometer);
+  float tempC = sensorDS18B20.getTempC(insideThermometer);
   Serial.print("Temperatura sensor 1: ");
-  Serial.print(sensorDS18B20.getTempCByIndex(0));
+  Serial.print(tempC);
   Serial.println(" C");
 }
+
