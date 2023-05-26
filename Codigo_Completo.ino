@@ -2,6 +2,7 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+
 #define CLK A0
 #define DOUT A1
 
@@ -18,8 +19,9 @@ float setPoint;
 const short DIR = 7;
 const int STEP = 6;
 const short ENABLE = 5;
-short int Velocidad;
-
+unsigned int Velocidad;
+double delayM;
+double x;
 // Variables del encoder
 const int Encoder_pin = 2;
 int PulsosRotacion = 20;
@@ -34,7 +36,7 @@ float RPMs;
 const int pintDatosDQ = 3;
 
 // Variables de estado
-short Estado = 8;
+short Estado = 0;
 short Dosificando = 0;
 
 //Lista de Estados
@@ -81,7 +83,7 @@ void setup() {
 
   sensorDS18B20.begin();
   if (!sensorDS18B20.getAddress(insideThermometer, 0)) 
-    Serial.println("Unable to find address for Device 0"); 
+   Serial.println("Unable to find address for Device 0"); 
 
   sensorDS18B20.setResolution(insideThermometer, 9);
   sensorDS18B20.setWaitForConversion(false);
@@ -133,14 +135,21 @@ void loop() {
       case MotorUnico:
         Serial.print("Con cual velocidad desea iniciar => ");
         delay(3000);
-        Velocidad = Serial.parseInt();
+        delayM =Serial.parseInt(); 
+        x = 1/delayM;
+        Serial.println(x);
+        Velocidad = (284227*x);
+        //Velocidad = Serial.parseInt(); 
         Serial.println(Velocidad);
         digitalWrite(ENABLE, LOW);
         Estado = Estado_MotorUnico;
         break;
 
       case CambioVelocidad:
-        Velocidad = Serial.parseInt();
+      
+        delayM =Serial.parseInt(); 
+        x = 1/delayM;
+        Velocidad = (284227*x);
         break;
 
       case DosificarYMotor:  //Bomba mientras mezcla
@@ -191,11 +200,7 @@ void estado_Dosificar_Y_Motor() {
     time = millis();
     interval = time - actualTime;
   }
-  if (Dosificando == 1) {
-    DosificarB();
-  } else {
-    Estado = Estado_MotorUnico;
-  }
+
 }
 
 void estado_Temperatura() {

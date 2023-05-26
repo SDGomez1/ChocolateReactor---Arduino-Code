@@ -1,6 +1,6 @@
 void IniciarMotor() {
   digitalWrite(STEP, HIGH);
-  delay(Velocidad);
+  delayMicroseconds(Velocidad);
   digitalWrite(STEP, LOW);
   ////// Encoder //////
   Encoder = digitalRead(Encoder_pin);
